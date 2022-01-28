@@ -17,3 +17,10 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::prefix('users')->group(function(){
+    Route::post('/login',[UsersController::class,'login']);
+    Route::get('/crear',[UsersController::class, 'crear']); 
+    Route::get('/recuperarPassword',[UsersController::class, 'recuperarPassword']);
+ });
+ 
