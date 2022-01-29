@@ -4,9 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\User;
 
-class ValidatePermission
+class ValidatePermission2
 {
     /**
      * Handle an incoming request.
@@ -17,10 +16,10 @@ class ValidatePermission
      */
     public function handle(Request $request, Closure $next)
     {
-        if($request->user->roll =='administrador' ){
+        if($request->user->roll =='particular' || $request->user->roll =='profesional' ){
             return $next($request);
         }else{
-            $respuesta['msg'] = "Necesitas permisos de administrador para hacer esta accion";   
+            $respuesta['msg'] = "Necesitas ser profesional o particular";   
         }
         return response()->json($respuesta);
     }

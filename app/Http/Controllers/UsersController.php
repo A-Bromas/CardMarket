@@ -6,6 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Carta;
+use App\Models\CartaVenta;
+use App\Models\CartaCompra;
+
 
 class UsersController extends Controller
 {
@@ -17,7 +21,7 @@ class UsersController extends Controller
             "name" => 'required|max:50',
             "email" => 'required|email|unique:App\Models\User,email|max:50',
             "password" => 'required|regex:/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{6,}/',
-            "rol" => 'required|in:particular,professional,administrator'
+            "roll" => 'required|in:particular,profesional,administrador'
         ]);
 
         if($validator -> fails()){
@@ -32,15 +36,16 @@ class UsersController extends Controller
             $usuario -> name = $datos -> name;
             $usuario -> email = $datos -> email;
             $usuario -> password = Hash::make($datos->password);
-            $usuario -> rol = $datos -> rol;
+            $usuario -> roll = $datos -> roll;
 
-            try {
+            if (User::where('name', '=', $datos->name)->first()) { 
+                $respuesta['msg'] = "Este usuario ya existe";
+            } elseif (User::where('email', '=', $datos->email)->first()) {
+                $respuesta['msg'] = "Este email ya existe";
+            }else {
                 $usuario->save();
-                $respuesta["msg"] = "Usuario guardado con id ".$usuario->id;
-            }catch (\Exception $e) {
-                $respuesta["status"] = 0;
-                $respuesta["msg"] = "Se ha producido un error".$e->getMessage();  
-            }
+                $respuesta['msg'] = "Usuario guardado con id ".$usuario->id;
+            } 
         }
        return response()->json($respuesta);
     }
@@ -52,7 +57,7 @@ class UsersController extends Controller
         $datos = $req -> getContent();
         $datos = json_decode($datos); 
         $email = $req->email;
-        $usuario = User::where('email', '=', $datos->email)->first();
+        $usuario = User::where('name', '=', $datos->name)->first();
 
         if ($usuario){
             if (Hash::check($datos->password, $usuario -> password)){
@@ -79,16 +84,14 @@ class UsersController extends Controller
     }
     public function recuperarPassword(Request $req){
         
-        //Obtener el email y validarlo 
+ 
         $response = ["status" => 1, "msg" => ""];
-        $data = $req->getContent();
-        $data = json_decode($data);
+        $datos = $req->getContent();
+        $datos = json_decode($datos);
 
-        //Buscar el email
         $email = $req->email;
 
-        //Encontrar al usuario con ese email
-        $user = User::where('email', '=', $data->email)->first();
+        $user = User::where('email', '=', $datos->email)->first();
 
         //Comprobar si existe el usuario
         if($user){
@@ -107,7 +110,7 @@ class UsersController extends Controller
             //Guardamos al usuario con la nueva contraseña cifrada
             $user->password = Hash::make($newPassword);
             $user->save();
-            $response['msg'] = "Nueva contraseña generada: ".$user->password;
+            $response['msg'] = "Nueva contraseña generada: ".$newPassword;
 
         }
         else{
@@ -117,4 +120,60 @@ class UsersController extends Controller
         
         return response()->json($response);
     }
+    public function comprarCarta(Request $req)
+    {
+        $respuesta = ['status' => 1, 'msg' => ''];
+
+
+            $datos = $req->getContent();
+            $datos = json_decode($datos);
+
+            $usuario = User::where('api_token', '=', $req->api_token)->first();
+
+            $carta = Carta::where('id','=',$datos->carta)->first();
+
+            if ($usuario) {
+                try {
+                    $cartaCompra = new CartaCompra();
+                    $cartaCompra->id_carta = $carta->id;
+                    $cartaCompra->id_user = $usuario->id;
+                    $cartaCompra->save();
+                    $respuesta['msg'] ='Carta comprada con id ' .$carta->id;
+                } catch (\Exception $e) {
+                    $respuesta['status'] = 0;
+                    $respuesta['msg'] = 'Se ha producido un error: ' . $e->getMessage();
+                }
+            } else {
+                $respuesta['status'] = 0;
+                $respuesta['msg'] = 'La carta ingresada no existe';
+            }
+        return response()->json($respuesta);
+    }
+    public function ventaCarta(Request $req)
+    {
+        $respuesta = ['status' => 1, 'msg' => ''];
+
+            $datos = $req -> getContent();
+            $datos = json_decode($datos); 
+
+            $cartas = Carta::select('id')                           
+            ->where('nombre','=',$datos->carta)
+            ->get();
+           
+    
+            $ventaCarta = new CartaVenta();
+            $ventaCarta -> carta = $datos -> carta;
+            $ventaCarta -> cantidad = $datos -> cantidad;
+            $ventaCarta -> precio = $datos->precio;
+            $ventaCarta -> usuario = $datos -> usuario;
+            $ventaCarta -> id_carta = $cartas;
+
+           
+            $ventaCarta->save();
+
+            $respuesta['msg'] = "Venta de carta guardada con id ".$ventaCarta->id;
+
+        return response()->json($respuesta);
+    }
+    
 }
