@@ -9,6 +9,8 @@ use App\Models\ColeccionCarta;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 use Illuminate\Http\Request;
 
@@ -90,20 +92,27 @@ class CardsController extends Controller
     public function busquedaNombre(Request $busqueda){
 
         $respuesta = ["status" => 1, "msg" => ""];
+        log::info("Carga de la funcion en la busqueda");
         try{
 
             if($busqueda -> has('busqueda')){
+                log::info("Entra en el try y comprueba si se ha introducido la busqueda");
 
-               $cartas = Carta::select(['nombre','simbolo','id'])                           
+               $cartas = Carta::select(['nombre','descripcion','id'])                           
                         ->where('nombre','like','%'. $busqueda -> input('busqueda').'%')
                         ->get();
+                        log::info("Realiza la busqueda en funcion del parametro introducido");
+
                         $respuesta['datos'] = $cartas;
             }else{
+                log::info("No se ha introducido ninguna busqueda por lo que devuelve el mensaje de introducir busqueda");
+
                 $respuesta['msg'] = "Introduce una busqueda";
             }
             
             
         }catch(\Exception $e){
+            log::info("Entra en el catch y muestra el error");
             $respuesta['status'] = 0;
             $respuesta['msg'] = "Se ha producido un error: ".$e->getMessage();
         }
