@@ -38,14 +38,16 @@ class UsersController extends Controller
             $usuario -> password = Hash::make($datos->password);
             $usuario -> roll = $datos -> roll;
 
-            if (User::where('name', '=', $datos->name)->first()) { 
-                $respuesta['msg'] = "Este usuario ya existe";
-            } elseif (User::where('email', '=', $datos->email)->first()) {
-                $respuesta['msg'] = "Este email ya existe";
-            }else {
-                $usuario->save();
-                $respuesta['msg'] = "Usuario guardado con id ".$usuario->id;
-            } 
+            
+            try{
+                 $usuario->save();
+                 $respuesta['msg'] = "Usuario guardado con id ".$usuario->id;          
+                 
+             }catch(\Exception $e){
+                 $respuesta['status'] = 0;
+                $respuesta['msg'] = "Se ha producido un error: ".$e->getMessage();
+             }
+            
         }
        return response()->json($respuesta);
     }
@@ -56,7 +58,6 @@ class UsersController extends Controller
 
         $datos = $req -> getContent();
         $datos = json_decode($datos); 
-        $email = $req->email;
         $usuario = User::where('name', '=', $datos->name)->first();
 
         if ($usuario){
@@ -93,31 +94,34 @@ class UsersController extends Controller
 
         $user = User::where('email', '=', $datos->email)->first();
 
-        //Comprobar si existe el usuario
-        if($user){
-           
-            $user->api_token = null;
-
+        try{
+            if($user){
             
-            $password = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz";
-            $characterLength  = strlen($password);
-            $newPassword = "";
+                $user->api_token = null;
 
-            for($i = 0; $i < 8; $i++){
-                $newPassword .= $password[rand(0, $characterLength  -1)];
+                
+                $password = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz";
+                $characterLength  = strlen($password);
+                $newPassword = "";
+
+                for($i = 0; $i < 8; $i++){
+                    $newPassword .= $password[rand(0, $characterLength  -1)];
+                }
+                    
+                //Guardamos al usuario con la nueva contraseña cifrada
+                $user->password = Hash::make($newPassword);
+                $user->save();
+                $response['msg'] = "Nueva contraseña generada: ".$newPassword;
+
             }
-                  
-            //Guardamos al usuario con la nueva contraseña cifrada
-            $user->password = Hash::make($newPassword);
-            $user->save();
-            $response['msg'] = "Nueva contraseña generada: ".$newPassword;
-
-        }
-        else{
-            $response['status'] = 0;
-            $response['msg'] = "Usuario no encontrado";
-        }
-        
+            else{
+                $response['status'] = 0;
+                $response['msg'] = "Usuario no encontrado";
+            }
+        }catch(\Exception $e){
+            $respuesta['status'] = 0;
+            $respuesta['msg'] = "Se ha producido un error: ".$e->getMessage();
+        }   
         return response()->json($response);
     }
     public function comprarCarta(Request $req)
@@ -153,25 +157,47 @@ class UsersController extends Controller
     {
         $respuesta = ['status' => 1, 'msg' => ''];
 
+        $validator = Validator::make(json_decode($req->getContent(), true),
+        [
+           'id_carta' => ['required', 'integer'],
+           'cantidad' => ['required', 'integer'],
+           'precio' => ['required', 'numeric','min:0','not_in:0'],
+
+       ]);
+        if ($validator->fails()) {
+             $respuesta['status'] = 0;
+            $respuesta['msg'] = $validator->errors();
+        } else {
             $datos = $req -> getContent();
             $datos = json_decode($datos); 
+            $usuario = User::where('api_token', '=', $req->api_token)->first();
 
             $cartas = Carta::select('id')                           
-            ->where('nombre','=',$datos->carta)
-            ->get();
-           
+            ->where('id','=',$datos->id_carta)
+             ->get();
+            if ($cartas){
+                $ventaCarta = new CartaVenta();
+                $ventaCarta -> carta = $datos -> id_carta;
+                $ventaCarta -> cantidad = $datos -> cantidad;
+                $ventaCarta -> precio = $datos->precio;
+                $ventaCarta -> usuario = $usuario->id;
+                
+                try {
+                    $ventaCarta->save();
+                    $respuesta['msg'] = "Venta de carta guardada con id ".$ventaCarta->id;
+                } catch (\Exception $e) {
+                    $respuesta['status'] = 0;
+                    $respuesta['msg'] ='Se ha producido un error: ' . $e->getMessage();
+                }
     
-            $ventaCarta = new CartaVenta();
-            $ventaCarta -> carta = $datos -> carta;
-            $ventaCarta -> cantidad = $datos -> cantidad;
-            $ventaCarta -> precio = $datos->precio;
-            $ventaCarta -> usuario = $datos -> usuario;
-            $ventaCarta -> id_carta = $cartas;
-
+            }else{
+                $respuesta['msg'] =
+                'La carta que intenta vender no esta registrada, busque el id correcto';
+                    
+             }
+        }
            
-            $ventaCarta->save();
-
-            $respuesta['msg'] = "Venta de carta guardada con id ".$ventaCarta->id;
+            
 
         return response()->json($respuesta);
     }

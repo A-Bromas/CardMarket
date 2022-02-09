@@ -24,7 +24,6 @@ Route::prefix('users')->group(function(){
     Route::post('/login',[UsersController::class,'login']);
     Route::put('/crear',[UsersController::class, 'crear']); 
     Route::get('/recuperarPassword',[UsersController::class, 'recuperarPassword']);
-    Route::get('/busquedaNombre',[CardsController::class,'busquedaNombre']);
     Route::get('/busquedaVenta',[CardsController::class,'busquedaVenta']);
 });
 
@@ -37,5 +36,7 @@ Route::middleware(['apitoken','permission'])->prefix('users')->group(function(){
 Route::middleware(['apitoken','permission2'])->prefix('users')->group(function(){
     Route::put('/comprarCarta',[UsersController::class,'comprarCarta']);
     Route::put('/ventaCarta',[UsersController::class,'ventaCarta']);
+    Route::get('/busquedaNombre',[CardsController::class,'busquedaNombre']);
+
     //Route::get('/detalle/{id}',[UsersController::class, 'detalle']);
 });
