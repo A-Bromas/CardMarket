@@ -15,7 +15,6 @@ class CreateVentaDeCartasTable extends Migration
     {
         Schema::create('venta_de_cartas', function (Blueprint $table) {
             $table->id();
-            $table->string('carta');
             $table->unsignedBigInteger('id_carta');
             $table->string('cantidad'); 
             $table->string('precio');
