@@ -16,7 +16,8 @@ use Illuminate\Http\Request;
 
 class CardsController extends Controller
 {
-    public function crearColeccion(Request $req){
+    public function crearColeccion(Request $req)
+    {
         $respuesta = ['status' => 1, 'msg' => ''];
     
         $validator = Validator::make(json_decode($req->getContent(), true), [
@@ -72,18 +73,21 @@ class CardsController extends Controller
                     $coleccion->save();
                     $respuesta["msg"] = "Coleccion guardada con id ".$coleccion->id;
                      
-                foreach($cartasCol as $id){
+                    foreach($cartasCol as $id){
                     $coleccionCarta = new ColeccionCarta();
                     $coleccionCarta->id_carta = $id;
                     $coleccionCarta->id_coleccion = $coleccion->id;
                     $coleccionCarta->save();
-                }
-                $respuesta['msg'] ='Se ha creado la coleccion con id: '.$coleccionCarta->id .' y se le han agregado las cartas con id: '.$cartaIds;
+                    }
+                    $respuesta['msg'] ='Se ha creado la coleccion con id: '.$coleccionCarta->id .' y se le han agregado las cartas con id: '.$cartaIds;
                 
-            }catch (\Exception $e) {
-                $respuesta['status'] = 0;
-                $respuesta['msg'] ='Se ha producido un error: ' . $e->getMessage();
+                }catch (\Exception $e) {
+                    $respuesta['status'] = 0;
+                    $respuesta['msg'] ='Se ha producido un error: ' . $e->getMessage();
+                }
             }
+        }
+        
         return response()->json($respuesta);
     }
 
