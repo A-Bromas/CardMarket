@@ -17,124 +17,77 @@ use Illuminate\Http\Request;
 class CardsController extends Controller
 {
     public function crearColeccion(Request $req){
-
-        {
-            $respuesta = ['status' => 1, 'msg' => ''];
+        $respuesta = ['status' => 1, 'msg' => ''];
     
-            $validator = Validator::make(json_decode($req->getContent(), true), [
-                'nombre' => ['required', 'max:50'],
-                'simbolo' => ['required', 'max:100'],
-                'edicion' => ['required', 'date'],
-                'carta' => ['required']
-            ]);
+        $validator = Validator::make(json_decode($req->getContent(), true), [
+            'nombre' => ['required', 'max:50'],
+            'simbolo' => ['required', 'max:100'],
+            'edicion' => ['required', 'date'],
+            'carta' => ['required']
+        ]);
     
-            if ($validator->fails()) {
-                $respuesta['status'] = 0;
-                $respuesta['msg'] = $validator->errors();
-            } else {
+        if ($validator->fails()) {
+             $respuesta['status'] = 0;
+            $respuesta['msg'] = $validator->errors();
+        } else {
 
-                $datos = $req -> getContent();
-                $datos = json_decode($datos); 
+             $datos = $req -> getContent();
+            $datos = json_decode($datos); 
 
-                $validId =[];
-                foreach ($datos->carta as $addCard) {
-                    if(isset($addCard->id)){
-                   // $i++;
-                    $carta = Carta::where('id','=',$addCard->id)->first();
-                    if($card){
-                        //$j++;
-                        array_push($validId,$card->id);
-                       
+             $cartasCol =[];
+            foreach ($datos->carta as $cartaNueva) {
+                if(isset($cartaNueva->id)){
+                    $carta = Carta::where('id','=',$cartaNueva->id)->first();
+                    if($carta){
+                        array_push($cartasCol,$carta->id);
                     }
+                }elseif (isset($cartaNueva->nombre) && isset($cartaNueva->descripcion)) {
+                    $nuevaCarta = new Card();
+                    $nuevaCarta->name = $nombre->nombre;
+                    $nuevaCarta->descripcion = $cartaNueva->descripcion;
     
-    
-                    }elseif (
-                                isset($addCard->name) &&
-                                isset($addCard->description) 
-                            ) {
-                                
-                                $newCard = new Card();
-                                $newCard->name = $addCard->name;
-                                $newCard->description = $addCard->description;
-    
-                                try {
-                                    $newCard->save();
-                                    array_push($validId,$newCard->id);
-                                    $respuesta['msg'] ='Carta guardada con id ' .$newcard->id;
+                        try {
+                            $nuevaCarta->save();
+                            array_push($cartasCol,$nuevaCarta->id);
+                            $respuesta['msg'] ='Carta guardada con id ' .$nuevaCarta->id;
                                         
-                                } catch (\Exception $e) {
-                                    $respuesta['status'] = 0;
-                                    $respuesta['msg'] ='Se ha producido un error: ' . $e->getMessage();
-                                }
-    
-    
-    
+                        } catch (\Exception $e) {
+                            $respuesta['status'] = 0;
+                             $respuesta['msg'] ='Se ha producido un error: ' . $e->getMessage();
+                        }
                 }else{
                     $respuesta['status'] = 0;
-                    $respuesta['msg'] ='Los datos ingresados no corresponden a los parametros de carta';
-                }
-                
+                    $respuesta['msg'] ='Los datos ingresados no son correctos';
+                }  
             }
     
-            //print_r ($validId);
-            if(!empty($validId)){
-                $cardsIds = implode (", ",$validId); 
+            if(!empty($cartasCol)){
+                $cartaIds = implode (", ",$cartasCol); 
                 try{
 
                     $coleccion = new Coleccion();
                     $coleccion -> nombre = $datos->nombre;
                     $coleccion -> simbolo = $datos->simbolo;
                     $coleccion -> edicion = $datos->edicion;
-        
-                    try {
-                         $coleccion->save();
-                        $respuesta["msg"] = "Coleccion guardada con id ".$coleccion->id;
-                     }catch (\Exception $e) {
-                        $respuesta["status"] = 0;
-                        $respuesta["msg"] = "Se ha producido un error".$e->getMessage();  
-                    }
-    
-                foreach($validId as $id){
-                    $cardCollection = new CardCollection();
-                    $cardCollection->card_id = $id;
-                    $cardCollection->collection_id = $collection->id;
-                    $cardCollection->save();
+                    $coleccion->save();
+                    $respuesta["msg"] = "Coleccion guardada con id ".$coleccion->id;
+                     
+                foreach($cartasCol as $id){
+                    $coleccionCarta = new ColeccionCarta();
+                    $coleccionCarta->id_carta = $id;
+                    $coleccionCarta->id_coleccion = $coleccion->id;
+                    $coleccionCarta->save();
                 }
-                $respuesta['msg'] ='Se ha creado la cardCollection con id: '.$cardCollection->id .' y se le han agregado las carta(s) con id(s): '.$cardsIds;
+                $respuesta['msg'] ='Se ha creado la coleccion con id: '.$coleccionCarta->id .' y se le han agregado las cartas con id: '.$cartaIds;
                 
             }catch (\Exception $e) {
                 $respuesta['status'] = 0;
                 $respuesta['msg'] ='Se ha producido un error: ' . $e->getMessage();
             }
-            }
-            //$respuesta['msg'] = "hay ".$i." ids y existen ".$j;
-    
-            
-        }
         return response()->json($respuesta);
     }
 
-        $respuesta = ["status" => 1, "msg" => ""];
-
-            $datos = $req -> getContent();
-            $datos = json_decode($datos); 
-
-            $coleccion = new Coleccion();
-            $coleccion -> nombre = $datos->nombre;
-            $coleccion -> simbolo = $datos->simbolo;
-            $coleccion -> edicion = $datos->edicion;
-
-            try {
-                 $coleccion->save();
-                $respuesta["msg"] = "Coleccion guardada con id ".$coleccion->id;
-             }catch (\Exception $e) {
-                $respuesta["status"] = 0;
-                $respuesta["msg"] = "Se ha producido un error".$e->getMessage();  
-            }
-
-            
-        return response()->json($respuesta);
-    }
+       
     public function crearCarta(Request $req)
     {
         $respuesta = ['status' => 1, 'msg' => ''];
@@ -163,7 +116,7 @@ class CardsController extends Controller
 
                 try {
                     $carta->save();
-                   $coleccionCarta = new ColeccionCarta();
+                    $coleccionCarta = new ColeccionCarta();
                     $coleccionCarta->id_carta = $carta->id;
                     $coleccionCarta->id_coleccion = $coleccion->id;
                     $coleccionCarta->save();
