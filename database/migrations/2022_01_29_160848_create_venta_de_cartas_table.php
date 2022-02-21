@@ -16,9 +16,11 @@ class CreateVentaDeCartasTable extends Migration
         Schema::create('venta_de_cartas', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('id_carta');
+            $table->foreign('id_carta')->references('id')->on('coleccion_cartas');
             $table->string('cantidad'); 
             $table->string('precio');
-            $table->string('usuario');
+            $table->unsignedBigInteger('usuario');
+            $table->foreign('usuario')->references('id')->on('users');
             $table->timestamps();
         });
     }

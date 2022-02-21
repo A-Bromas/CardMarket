@@ -28,7 +28,7 @@ class CardsController extends Controller
         ]);
     
         if ($validator->fails()) {
-             $respuesta['status'] = 0;
+            $respuesta['status'] = 0;
             $respuesta['msg'] = $validator->errors();
         } else {
 
@@ -43,8 +43,8 @@ class CardsController extends Controller
                         array_push($cartasCol,$carta->id);
                     }
                 }elseif (isset($cartaNueva->nombre) && isset($cartaNueva->descripcion)) {
-                    $nuevaCarta = new Card();
-                    $nuevaCarta->name = $nombre->nombre;
+                    $nuevaCarta = new Carta();
+                    $nuevaCarta->nombre = $cartaNueva->nombre;
                     $nuevaCarta->descripcion = $cartaNueva->descripcion;
     
                         try {
@@ -109,19 +109,25 @@ class CardsController extends Controller
             $datos = json_decode($datos); 
 
             try{
-                $coleccionCarta = new ColeccionCarta();
-                $coleccionCarta->id_carta = $datos->carta;
-                $coleccionCarta->id_coleccion = $datos->coleccion;
-                $coleccionCarta->save();
-                
-
-                $respuesta['msg'] ='Se ha agregado la coleccion con id: '.$datos->coleccion .' y se le ha agregado la carta con id: '.$datos->carta;
-        
+                $carta = Carta::where('id','=',$datos->carta)->first();
+                $coleccion = Coleccion::where('id','=',$datos->coleccion)->first();
+                if($carta && $coleccion){
+                    $coleccionCarta = new ColeccionCarta();
+                    $coleccionCarta->id_carta = $datos->carta;
+                    $coleccionCarta->id_coleccion = $datos->coleccion;
+                    $coleccionCarta->save();
+                    
+                    $respuesta['msg'] ='Se ha agregado la coleccion con id: '.$datos->coleccion .' y se le ha agregado la carta con id: '.$datos->carta;
+                }else {
+                    $respuesta['status'] = 0;
+                    $respuesta['msg'] ='Esa coleccion o esa carta no existen';
+                }
             }catch (\Exception $e) {
                 $respuesta['status'] = 0;
                 $respuesta['msg'] ='Se ha producido un error: ' . $e->getMessage();
             }
         }
+        return response()->json($respuesta);
     }
 
        
@@ -205,9 +211,14 @@ class CardsController extends Controller
 
             if($busqueda -> has('busqueda')){
 
-               $cartas = CartaVenta::select(['carta','id_carta','cantidad','precio','usuario'])                           
-                        ->where('carta','like','%'. $busqueda -> input('busqueda').'%')
-                        ->get();
+               $cartas = CartaVenta::select(['id_carta','cantidad','precio','usuario'])
+                        ->join('users', 'users.id', '=', 'venta_de_cartas.usuario')
+                        ->join('cartas', 'cartas.id', '=', 'venta_de_cartas.id_carta')
+                        ->select('cartas.nombre', 'venta_de_cartas.cantidad', 'venta_de_cartas.precio', 'users.name as vendedor')
+                        ->where('cartas.nombre','like','%'. $busqueda -> input('busqueda').'%')
+                        ->orderBy('venta_de_cartas.precio','ASC')
+                        ->get();                           
+                        
                         $respuesta['datos'] = $cartas;
             }else{
                 $respuesta['msg'] = "Introduce una busqueda";

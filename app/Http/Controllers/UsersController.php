@@ -177,7 +177,7 @@ class UsersController extends Controller
              ->get();
             if ($cartas){
                 $ventaCarta = new CartaVenta();
-                $ventaCarta -> carta = $datos -> id_carta;
+                $ventaCarta -> id_carta = $datos -> id_carta;
                 $ventaCarta -> cantidad = $datos -> cantidad;
                 $ventaCarta -> precio = $datos->precio;
                 $ventaCarta -> usuario = $usuario->id;
