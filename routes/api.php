@@ -30,13 +30,14 @@ Route::prefix('users')->group(function(){
 Route::middleware(['apitoken','permission'])->prefix('users')->group(function(){
     Route::put('/crearCarta',[CardsController::class,'crearCarta']);
     Route::put('/crearColeccion',[CardsController::class,'crearColeccion']);
-    //Route::get('/detalle/{id}',[UsersController::class, 'detalle']);
+    Route::put('/asociarCartaColeccion',[CardsController::class, 'asociarCartaColeccion']);
 });
 
 Route::middleware(['apitoken','permission2'])->prefix('users')->group(function(){
     Route::put('/comprarCarta',[UsersController::class,'comprarCarta']);
     Route::put('/ventaCarta',[UsersController::class,'ventaCarta']);
     Route::get('/busquedaNombre',[CardsController::class,'busquedaNombre']);
+    
 
     //Route::get('/detalle/{id}',[UsersController::class, 'detalle']);
 });

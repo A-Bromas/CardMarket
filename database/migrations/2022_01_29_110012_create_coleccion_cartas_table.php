@@ -17,6 +17,8 @@ class CreateColeccionCartasTable extends Migration
             $table->id();
             $table->unsignedBigInteger('id_carta');
             $table->unsignedBigInteger('id_coleccion');
+            $table->foreign('id_carta')->references('id')->on('cartas');
+            $table->foreign('id_coleccion')->references('id')->on('coleccions');
             $table->timestamps();
         });
     }

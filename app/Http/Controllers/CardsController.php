@@ -32,7 +32,7 @@ class CardsController extends Controller
             $respuesta['msg'] = $validator->errors();
         } else {
 
-             $datos = $req -> getContent();
+            $datos = $req -> getContent();
             $datos = json_decode($datos); 
 
              $cartasCol =[];
@@ -89,6 +89,39 @@ class CardsController extends Controller
         }
         
         return response()->json($respuesta);
+    }
+    public function asociarCartaColeccion(Request $req)
+    {
+         $respuesta = ['status' => 1, 'msg' => ''];
+
+         $validator = Validator::make(json_decode($req->getContent(), true), [
+            'carta' => ['required'],
+            'coleccion' => ['required']
+        ]);
+    
+        if ($validator->fails()) {
+             $respuesta['status'] = 0;
+            $respuesta['msg'] = $validator->errors();
+
+        } else {
+
+            $datos = $req -> getContent();
+            $datos = json_decode($datos); 
+
+            try{
+                $coleccionCarta = new ColeccionCarta();
+                $coleccionCarta->id_carta = $datos->carta;
+                $coleccionCarta->id_coleccion = $datos->coleccion;
+                $coleccionCarta->save();
+                
+
+                $respuesta['msg'] ='Se ha agregado la coleccion con id: '.$datos->coleccion .' y se le ha agregado la carta con id: '.$datos->carta;
+        
+            }catch (\Exception $e) {
+                $respuesta['status'] = 0;
+                $respuesta['msg'] ='Se ha producido un error: ' . $e->getMessage();
+            }
+        }
     }
 
        
