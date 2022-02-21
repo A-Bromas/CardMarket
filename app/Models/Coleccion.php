@@ -10,4 +10,9 @@ class Coleccion extends Model
     use HasFactory;
     public function cartas(){
     }
+
+    // public function cards()
+    // {
+    //     return $this->belongsToMany(Carta::class);
+    // }
 }
